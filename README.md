@@ -36,25 +36,7 @@
 
 ## 📐 Kiến trúc hệ thống
 
-Dự án áp dụng mô hình **Clean Architecture** ở tầng Backend nhằm tách biệt rõ ràng các mối quan tâm (Separation of Concerns):
-
-```mermaid
-graph TD
-    subgraph Client (Frontend)
-        React[React Client] --> Axios[Axios API Client / Interceptors]
-    end
-    
-    subgraph Server (Backend)
-        Axios --> Controllers[Presentation Layer: Controllers]
-        Controllers --> Services[Application/Business Layer: Services]
-        Services --> Repositories[Core/Data Layer: Repositories]
-        Repositories --> DbContext[Infrastructure: EF Core DbContext]
-    end
-
-    subgraph Database
-        DbContext --> SQL[SQL Server]
-    end
-```
+Dự án áp dụng mô hình **Clean Architecture** ở tầng Backend nhằm tách biệt rõ ràng các mối quan tâm (Separation of Concerns)
 
 *   **API Layer:** Định nghĩa các RESTful API endpoints, xử lý routing, CORS và JWT validation middleware.
 *   **Service Layer:** Chứa toàn bộ logic nghiệp vụ (Business Logic), quản lý giao dịch tài chính ví học phí, tính lương giáo viên và kiểm tra xung đột lịch học.
