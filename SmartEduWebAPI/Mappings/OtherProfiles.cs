@@ -14,8 +14,10 @@ namespace SmartEduWebAPI.Mappings
         {
             CreateMap<Teacher, TeacherDto>()
                 .ForMember(d => d.ClassCount, o => o.MapFrom(s => s.Classes != null ? s.Classes.Count : 0));
-            CreateMap<TeacherCreateDto, Teacher>();
-            CreateMap<TeacherUpdateDto, Teacher>();
+            CreateMap<TeacherCreateDto, Teacher>()
+                .ForMember(d => d.AvatarUrl, o => o.MapFrom(s => s.AvatarUrl ?? string.Empty));
+            CreateMap<TeacherUpdateDto, Teacher>()
+                .ForAllMembers(o => o.Condition((src, dest, val) => val != null && !string.IsNullOrEmpty(val.ToString())));
         }
     }
 

@@ -340,7 +340,7 @@ export const Students: React.FC = () => {
                 label="Email"
                 rules={[{ type: 'email', message: 'Enter a valid email!' }]}
               >
-                <Input placeholder="Student email" />
+                <Input placeholder="Student email" disabled={!!editingId} />
               </Form.Item>
             </Col>
           </Row>
