@@ -21,3 +21,6 @@ Desktop.ini
 # Backups
 *.zip
 SmartEdu/
+
+# Uploads
+SmartEduWebAPI/Uploads/

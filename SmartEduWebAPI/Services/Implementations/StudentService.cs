@@ -55,10 +55,21 @@ namespace SmartEduWebAPI.Services.Implementations
             await _userManager.AddToRoleAsync(user, SystemRoles.Student);
 
             // Generate student code
-            var count = await _repo.CountAsync();
+            var students = await _repo.GetAllAsync();
+            var nextNum = 1;
+            if (students.Any())
+            {
+                nextNum = students
+                    .Select(s => {
+                        var parts = s.StudentCode.Split('-');
+                        return parts.Length > 1 && int.TryParse(parts[1], out var val) ? val : 0;
+                    })
+                    .Max() + 1;
+            }
             var student = _mapper.Map<Student>(dto);
-            student.StudentCode = $"S-{(count + 1):D3}";
+            student.StudentCode = $"S-{nextNum:D3}";
             student.UserId = user.Id;
+            student.AvatarUrl = dto.AvatarUrl ?? string.Empty;
             student.Wallet = new Wallet { Balance = 0, RemainingSessions = 0 };
 
             await _repo.AddAsync(student);

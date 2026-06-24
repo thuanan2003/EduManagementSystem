@@ -49,10 +49,21 @@ namespace SmartEduWebAPI.Services.Implementations
             if (!result.Succeeded) throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
             await _userManager.AddToRoleAsync(user, SystemRoles.Teacher);
 
-            var count = await _repo.CountAsync();
+            var teachers = await _repo.GetAllAsync();
+            var nextNum = 1;
+            if (teachers.Any())
+            {
+                nextNum = teachers
+                    .Select(t => {
+                        var parts = t.TeacherCode.Split('-');
+                        return parts.Length > 1 && int.TryParse(parts[1], out var val) ? val : 0;
+                    })
+                    .Max() + 1;
+            }
             var teacher = _mapper.Map<Teacher>(dto);
-            teacher.TeacherCode = $"T-{(count + 1):D3}";
+            teacher.TeacherCode = $"T-{nextNum:D3}";
             teacher.UserId = user.Id;
+            teacher.AvatarUrl = dto.AvatarUrl ?? string.Empty;
 
             await _repo.AddAsync(teacher);
             await _repo.SaveChangesAsync();
@@ -112,9 +123,19 @@ namespace SmartEduWebAPI.Services.Implementations
 
         public async Task<CourseDto> CreateAsync(CourseCreateDto dto)
         {
-            var count = await _repo.CountAsync();
+            var courses = await _repo.GetAllAsync();
+            var nextNum = 1;
+            if (courses.Any())
+            {
+                nextNum = courses
+                    .Select(c => {
+                        var parts = c.CourseCode.Split('-');
+                        return parts.Length > 1 && int.TryParse(parts[1], out var val) ? val : 0;
+                    })
+                    .Max() + 1;
+            }
             var course = _mapper.Map<Course>(dto);
-            course.CourseCode = $"CRS-{(count + 1):D3}";
+            course.CourseCode = $"CRS-{nextNum:D3}";
             await _repo.AddAsync(course);
             await _repo.SaveChangesAsync();
             return _mapper.Map<CourseDto>(course);
@@ -175,9 +196,19 @@ namespace SmartEduWebAPI.Services.Implementations
 
         public async Task<ClassDto> CreateAsync(ClassCreateDto dto)
         {
-            var count = await _repo.CountAsync();
+            var classes = await _repo.GetAllAsync();
+            var nextNum = 1;
+            if (classes.Any())
+            {
+                nextNum = classes
+                    .Select(c => {
+                        var parts = c.ClassCode.Split('-');
+                        return parts.Length > 1 && int.TryParse(parts[1], out var val) ? val : 0;
+                    })
+                    .Max() + 1;
+            }
             var cls = _mapper.Map<Class>(dto);
-            cls.ClassCode = $"CLS-{(count + 1):D3}";
+            cls.ClassCode = $"CLS-{nextNum:D3}";
             await _repo.AddAsync(cls);
             await _repo.SaveChangesAsync();
             return _mapper.Map<ClassDto>(cls);
