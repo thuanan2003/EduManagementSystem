@@ -1,0 +1,154 @@
+<div>
+  <!-- Header -->
+  <div class="mb-4">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-1" style="font-size: 12px;">
+        <li class="breadcrumb-item"><a href="#" class="text-decoration-none text-muted">Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Admin Overview</li>
+      </ol>
+    </nav>
+    <h1 class="page-title">Admin Dashboard</h1>
+    <p class="text-muted">Welcome to SmartEdu management center.</p>
+  </div>
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+      <div class="mt-2 text-muted">Loading dashboard...</div>
+    </div>
+  } @else if (error()) {
+    <div class="alert alert-danger" role="alert">
+      {{ error() }}
+    </div>
+  } @else {
+    <!-- KPI Row 1 -->
+    <div class="row g-4 mb-4">
+      @for (kpi of kpiRow1(); track kpi.title) {
+        <div class="col-12 col-sm-6 col-md-3">
+          <div class="custom-card shadow-sm border-top border-3" [style.border-top-color]="kpi.color" style="margin-bottom: 0;">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <div class="text-muted small text-uppercase fw-semibold mb-1">{{ kpi.title }}</div>
+                <div class="kpi-number" [style.color]="kpi.color">{{ kpi.value }}</div>
+              </div>
+              <div class="rounded-circle d-flex align-items-center justify-content-center text-white" 
+                   [style.background-color]="kpi.color" style="width: 44px; height: 44px; font-size: 20px;">
+                <i [class]="kpi.icon"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- KPI Row 2 -->
+    <div class="row g-4 mb-4">
+      <!-- Monthly Revenue -->
+      <div class="col-12 col-sm-6 col-md-3">
+        <div class="custom-card shadow-sm border-top border-3 border-teal" style="border-top-color: #13c2c2; margin-bottom: 0;">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <div class="text-muted small text-uppercase fw-semibold mb-1">Monthly Revenue</div>
+              <div class="kpi-number text-teal" style="color: #13c2c2; font-size: 22px;">{{ formatCurrency(stats()?.monthlyRevenue) }}</div>
+            </div>
+            <div class="rounded-circle d-flex align-items-center justify-content-center text-white" 
+                 style="background-color: #13c2c2; width: 44px; height: 44px; font-size: 20px;">
+              <i class="bi bi-cash-stack"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today's Attendance -->
+      <div class="col-12 col-sm-6 col-md-3">
+        <div class="custom-card shadow-sm border-top border-3 border-pink" style="border-top-color: #eb2f96; margin-bottom: 0;">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <div class="text-muted small text-uppercase fw-semibold mb-1">Today's Attendance</div>
+              <div class="kpi-number" style="color: #eb2f96;">{{ stats()?.todayAttendance ?? 0 }}</div>
+            </div>
+            <div class="rounded-circle d-flex align-items-center justify-content-center text-white" 
+                 style="background-color: #eb2f96; width: 44px; height: 44px; font-size: 20px;">
+              <i class="bi bi-journal-check"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Students -->
+      <div class="col-12 col-sm-6 col-md-3">
+        <div class="custom-card shadow-sm border-top border-3 border-success" style="border-top-color: #52c41a; margin-bottom: 0;">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <div class="text-muted small text-uppercase fw-semibold mb-1">Active Students</div>
+              <div class="kpi-number text-success" style="color: #52c41a;">{{ stats()?.activeStudents ?? 0 }}</div>
+            </div>
+            <div class="rounded-circle d-flex align-items-center justify-content-center text-white" 
+                 style="background-color: #52c41a; width: 44px; height: 44px; font-size: 20px;">
+              <i class="bi bi-person-check"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pending Absence Requests -->
+      <div class="col-12 col-sm-6 col-md-3">
+        <div class="custom-card shadow-sm border-top border-3" 
+             [style.border-top-color]="(stats()?.pendingAbsenceRequests ?? 0) > 0 ? '#faad14' : '#6c757d'" 
+             style="margin-bottom: 0;">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <div class="text-muted small text-uppercase fw-semibold mb-1">Pending Absences</div>
+              <div class="kpi-number" [style.color]="(stats()?.pendingAbsenceRequests ?? 0) > 0 ? '#faad14' : '#6c757d'">
+                {{ stats()?.pendingAbsenceRequests ?? 0 }}
+              </div>
+            </div>
+            <div class="rounded-circle d-flex align-items-center justify-content-center text-white" 
+                 [style.background-color]="(stats()?.pendingAbsenceRequests ?? 0) > 0 ? '#faad14' : '#6c757d'" 
+                 style="width: 44px; height: 44px; font-size: 20px;">
+              <i class="bi bi-exclamation-triangle"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4">
+      <!-- Revenue Chart -->
+      <div class="col-12 col-lg-7">
+        <div class="custom-card shadow-sm h-100 mb-0">
+          <h5 class="fw-bold mb-3">Revenue — Last 6 Months</h5>
+          <div class="chart-container position-relative" style="height: 300px;">
+            <canvas #revenueCanvas></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Attendance Chart -->
+      <div class="col-12 col-lg-5">
+        <div class="custom-card shadow-sm h-100 mb-0">
+          <h5 class="fw-bold mb-3">Attendance — Last 7 Days</h5>
+          <div class="chart-container position-relative" style="height: 300px;">
+            <canvas #attendanceCanvas></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Business Rules -->
+    <div class="custom-card shadow-sm">
+      <h5 class="fw-bold mb-3">Active Business Rules</h5>
+      <div class="row g-3">
+        @for (rule of rules; track rule) {
+          <div class="col-12 col-md-6 d-flex align-items-start gap-2">
+            <span class="badge rounded-circle bg-success-subtle text-success p-1" style="font-size: 10px;">
+              <i class="bi bi-check-lg"></i>
+            </span>
+            <span class="text-dark">{{ rule }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

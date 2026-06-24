@@ -1,0 +1,364 @@
+<div>
+  <!-- Page Header -->
+  <div class="mb-4">
+    <button (click)="goBack()" class="btn btn-link text-decoration-none text-muted p-0 mb-3 d-flex align-items-center gap-2">
+      <i class="bi bi-arrow-left"></i> Quay lại danh sách học sinh
+    </button>
+    
+    @if (student()) {
+      <div class="d-flex align-items-center gap-3">
+        <img [src]="student()?.avatarUrl || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'" 
+             class="rounded-circle border" 
+             style="width: 64px; height: 64px; object-fit: cover;"
+             (error)="onAvatarError($event)" />
+        <div>
+          <h2 class="fw-bold mb-1" style="color: #212529;">{{ student()?.fullName }}</h2>
+          <div class="d-flex align-items-center gap-2">
+            <span class="text-muted small">ID: {{ student()?.studentCode }}</span>
+            <span class="custom-badge" [ngClass]="getStatusClass(student()?.studentStatus || '')">
+              {{ student()?.studentStatus }}
+            </span>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+      <div class="mt-2 text-muted">Đang tải thông tin chi tiết học sinh...</div>
+    </div>
+  } @else if (error()) {
+    <div class="alert alert-danger" role="alert">
+      {{ error() }}
+    </div>
+  } @else {
+    <div class="row g-4">
+      <!-- Left Column: Wallet Summary -->
+      <div class="col-12 col-lg-4">
+        <div class="custom-card shadow-sm text-center">
+          <h5 class="fw-bold text-start border-bottom pb-2 mb-3">
+            <i class="bi bi-wallet2 me-2" style="color: var(--primary-color);"></i> Ví học phí
+          </h5>
+          
+          <div class="py-3">
+            <span class="text-muted small">Số dư hiện tại</span>
+            <h2 class="fw-extrabold my-2 text-teal" style="color: #13c2c2; font-size: 28px; font-weight: 800;">
+              {{ formatCurrency(wallet()?.balance) }}
+            </h2>
+            <div class="mb-3">
+              <span class="custom-badge fs-6" [ngClass]="(wallet()?.remainingSessions ?? 0) < 3 ? 'danger' : 'success'">
+                Số buổi còn lại: {{ wallet()?.remainingSessions }}
+              </span>
+            </div>
+
+            @if ((wallet()?.remainingSessions ?? 0) < 3) {
+              <div class="alert alert-warning py-2 px-3 text-start small mb-3 border-0" style="border-radius: 8px; background-color: var(--status-warning-bg); color: var(--status-warning);">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                <strong>Số buổi học sắp hết!</strong> Số buổi còn lại nhỏ hơn 3. Hãy gửi thông báo nhắc phụ huynh nạp tiền.
+              </div>
+            }
+
+            <div class="d-flex justify-content-center gap-2 mt-4">
+              <button (click)="openDepositModal()" class="btn btn-primary btn-sm d-flex align-items-center gap-1">
+                <i class="bi bi-plus-circle"></i> Nạp tiền
+              </button>
+              <button (click)="openRefundModal()" class="btn btn-outline-danger-custom btn-sm d-flex align-items-center gap-1">
+                <i class="bi bi-dash-circle"></i> Hoàn tiền
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Tabs Detailed Info -->
+      <div class="col-12 col-lg-8">
+        <div class="custom-card shadow-sm p-4">
+          <!-- Tabs Navigation -->
+          <ul class="nav nav-tabs mb-4" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link border-0 fw-semibold text-muted" [class.active]="activeTab() === 'profile'" 
+                      [style.color]="activeTab() === 'profile' ? 'var(--primary-color) !important' : ''"
+                      [style.border-bottom]="activeTab() === 'profile' ? '2px solid var(--primary-color) !important' : ''"
+                      (click)="setTab('profile')" type="button">
+                <i class="bi bi-person me-2"></i>Thông tin cá nhân
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link border-0 fw-semibold text-muted" [class.active]="activeTab() === 'attendance'" 
+                      [style.color]="activeTab() === 'attendance' ? 'var(--primary-color) !important' : ''"
+                      [style.border-bottom]="activeTab() === 'attendance' ? '2px solid var(--primary-color) !important' : ''"
+                      (click)="setTab('attendance')" type="button">
+                <i class="bi bi-calendar-check me-2"></i>Lịch sử điểm danh
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link border-0 fw-semibold text-muted" [class.active]="activeTab() === 'transactions'" 
+                      [style.color]="activeTab() === 'transactions' ? 'var(--primary-color) !important' : ''"
+                      [style.border-bottom]="activeTab() === 'transactions' ? '2px solid var(--primary-color) !important' : ''"
+                      (click)="setTab('transactions')" type="button">
+                <i class="bi bi-clock-history me-2"></i>Lịch sử giao dịch
+              </button>
+            </li>
+          </ul>
+
+          <!-- Tab Contents -->
+          <div class="tab-content">
+            <!-- Profile Tab -->
+            @if (activeTab() === 'profile') {
+              <div>
+                <h5 class="fw-bold mb-3" style="color: var(--text-main);">Thông tin học viên</h5>
+                <table class="table table-bordered mb-4">
+                  <tbody>
+                    <tr>
+                      <td class="fw-semibold text-muted bg-light" style="width: 30%;">Họ và tên</td>
+                      <td>{{ student()?.fullName }}</td>
+                    </tr>
+                    <tr>
+                      <td class="fw-semibold text-muted bg-light">Ngày sinh</td>
+                      <td>{{ formatDate(student()?.dateOfBirth) }}</td>
+                    </tr>
+                    <tr>
+                      <td class="fw-semibold text-muted bg-light">Giới tính</td>
+                      <td>{{ student()?.gender }}</td>
+                    </tr>
+                    <tr>
+                      <td class="fw-semibold text-muted bg-light">Địa chỉ</td>
+                      <td>{{ student()?.address || '-' }}</td>
+                    </tr>
+                    <tr>
+                      <td class="fw-semibold text-muted bg-light">Số điện thoại</td>
+                      <td>{{ student()?.phone || '-' }}</td>
+                    </tr>
+                    <tr>
+                      <td class="fw-semibold text-muted bg-light">Email</td>
+                      <td>{{ student()?.email || '-' }}</td>
+                    </tr>
+                    <tr>
+                      <td class="fw-semibold text-muted bg-light">Trường / Lớp</td>
+                      <td>{{ student()?.schoolName }} (Khối {{ student()?.gradeLevel }})</td>
+                    </tr>
+                    <tr>
+                      <td class="fw-semibold text-muted bg-light text-danger">Lưu ý sức khỏe</td>
+                      <td class="text-danger fw-semibold">{{ student()?.healthNote || 'Không có ghi chú đặc biệt' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <h5 class="fw-bold mb-3 mt-4" style="color: var(--text-main);">Liên hệ phụ huynh</h5>
+                <table class="table table-bordered mb-0">
+                  <tbody>
+                    <tr>
+                      <td class="fw-semibold text-muted bg-light" style="width: 30%;">Tên phụ huynh</td>
+                      <td>{{ student()?.parentName || '-' }}</td>
+                    </tr>
+                    <tr>
+                      <td class="fw-semibold text-muted bg-light">SĐT phụ huynh</td>
+                      <td>{{ student()?.parentPhone || '-' }}</td>
+                    </tr>
+                    <tr>
+                      <td class="fw-semibold text-muted bg-light">Email phụ huynh</td>
+                      <td>{{ student()?.parentEmail || '-' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            }
+
+            <!-- Attendance Tab -->
+            @if (activeTab() === 'attendance') {
+              <div>
+                @if (attendance().length === 0) {
+                  <div class="text-center py-4 text-muted">Không có lịch sử điểm danh nào</div>
+                } @else {
+                  <div class="table-responsive">
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th>Ngày</th>
+                          <th>Lớp học</th>
+                          <th>Trạng thái</th>
+                          <th>Ghi chú</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (item of attendance(); track item.id) {
+                          <tr>
+                            <td>{{ formatDate(item.attendanceDate) }}</td>
+                            <td class="fw-semibold">{{ item.className }}</td>
+                            <td>
+                              <span class="custom-badge" [ngClass]="getAttendanceStatusClass(item.status)">
+                                {{ item.status }}
+                              </span>
+                            </td>
+                            <td><span class="small text-muted">{{ item.note || '-' }}</span></td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Transactions Tab -->
+            @if (activeTab() === 'transactions') {
+              <div>
+                @if (transactions().length === 0) {
+                  <div class="text-center py-4 text-muted">Chưa có giao dịch ví nào phát sinh</div>
+                } @else {
+                  <div class="table-responsive">
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th>Thời gian</th>
+                          <th>Loại</th>
+                          <th>Số tiền (VND)</th>
+                          <th>Mô tả</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (tx of transactions(); track tx.id) {
+                          <tr>
+                            <td>{{ formatDateTime(tx.transactionDate) }}</td>
+                            <td>
+                              <span class="custom-badge" 
+                                    [ngClass]="tx.type === 'Deduction' ? 'warning' : tx.type === 'Refund' ? 'success' : 'info'">
+                                {{ tx.type }}
+                              </span>
+                            </td>
+                            <td>
+                              <span class="fw-bold" [ngClass]="tx.type === 'Deduction' ? 'text-danger' : 'text-success'">
+                                {{ tx.type === 'Deduction' ? '-' : '+' }}{{ tx.amount.toLocaleString('vi-VN') }} VND
+                              </span>
+                            </td>
+                            <td><span class="small">{{ tx.description }}</span></td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Deposit Modal -->
+@if (depositModalOpen()) {
+  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 1050;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 12px;">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold">Nạp Tiền Vào Ví Học Phí</h5>
+          <button type="button" class="btn-close" (click)="closeDepositModal()"></button>
+        </div>
+        
+        <div class="modal-body py-4">
+          @if (modalError()) {
+            <div class="alert alert-danger py-2 px-3 text-center mb-3" style="font-size: 13px; border-radius: 8px;">{{ modalError() }}</div>
+          }
+
+          <form [formGroup]="depositForm">
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Số tiền nạp (VND) *</label>
+              <input type="number" class="form-control" formControlName="amount" placeholder="e.g. 1500000" />
+              @if (hasFormError(depositForm, 'amount', 'required')) {
+                <div class="text-danger small mt-1">Vui lòng nhập số tiền nạp!</div>
+              }
+              @if (hasFormError(depositForm, 'amount', 'min')) {
+                <div class="text-danger small mt-1">Số tiền tối thiểu là 1,000 VND!</div>
+              }
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Số buổi được cộng *</label>
+              <input type="number" class="form-control" formControlName="sessions" placeholder="e.g. 10" />
+              @if (hasFormError(depositForm, 'sessions', 'required')) {
+                <div class="text-danger small mt-1">Vui lòng nhập số buổi cộng thêm!</div>
+              }
+              @if (hasFormError(depositForm, 'sessions', 'min')) {
+                <div class="text-danger small mt-1">Số buổi cộng thêm tối thiểu là 1!</div>
+              }
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Ghi chú</label>
+              <input type="text" class="form-control" formControlName="description" placeholder="Mô tả giao dịch nạp tiền" />
+            </div>
+          </form>
+        </div>
+        
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light" (click)="closeDepositModal()">Hủy</button>
+          <button type="button" class="btn btn-primary" (click)="submitDeposit()" 
+                  [disabled]="depositForm.invalid || submitting()">
+            Nạp tiền
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Refund Modal -->
+@if (refundModalOpen()) {
+  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 1050;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 12px;">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold text-danger">Hoàn tiền / Khấu trừ ví</h5>
+          <button type="button" class="btn-close" (click)="closeRefundModal()"></button>
+        </div>
+        
+        <div class="modal-body py-4">
+          @if (modalError()) {
+            <div class="alert alert-danger py-2 px-3 text-center mb-3" style="font-size: 13px; border-radius: 8px;">{{ modalError() }}</div>
+          }
+
+          <form [formGroup]="refundForm">
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Số tiền khấu trừ (VND) *</label>
+              <input type="number" class="form-control" formControlName="amount" placeholder="e.g. 150000" />
+              @if (hasFormError(refundForm, 'amount', 'required')) {
+                <div class="text-danger small mt-1">Vui lòng nhập số tiền!</div>
+              }
+              @if (hasFormError(refundForm, 'amount', 'min')) {
+                <div class="text-danger small mt-1">Số tiền tối thiểu là 0 VND!</div>
+              }
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Số buổi khấu trừ *</label>
+              <input type="number" class="form-control" formControlName="sessions" placeholder="e.g. 1" />
+              @if (hasFormError(refundForm, 'sessions', 'required')) {
+                <div class="text-danger small mt-1">Vui lòng nhập số buổi khấu trừ!</div>
+              }
+              @if (hasFormError(refundForm, 'sessions', 'min')) {
+                <div class="text-danger small mt-1">Số buổi khấu trừ tối thiểu là 0!</div>
+              }
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Ghi chú</label>
+              <input type="text" class="form-control" formControlName="description" placeholder="Mô tả giao dịch khấu trừ" />
+            </div>
+          </form>
+        </div>
+        
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light" (click)="closeRefundModal()">Hủy</button>
+          <button type="button" class="btn btn-danger" (click)="submitRefund()" 
+                  [disabled]="refundForm.invalid || submitting()">
+            Trừ ví
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

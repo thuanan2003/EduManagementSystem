@@ -1,0 +1,112 @@
+<div>
+  <!-- Header -->
+  <div class="mb-4">
+    <h1 class="page-title">Ví Học Phí & Học Phí</h1>
+    <p class="text-muted">Theo dõi số dư tài khoản của bạn, kiểm tra số buổi học còn lại và xem lịch sử giao dịch đóng tiền.</p>
+  </div>
+
+  <!-- Depletion Alert Alert -->
+  @if (depletionInfo(); as info) {
+    <div class="alert mb-4 border-0 p-3" 
+         [style.background-color]="info.bg" 
+         [style.color]="info.color" 
+         style="border-radius: 12px;">
+      <div class="d-flex align-items-start gap-2.5">
+        <i class="bi" [class]="info.icon" style="font-size: 20px;"></i>
+        <div>
+          <strong class="d-block mb-1">{{ info.title }}</strong>
+          <span class="small" style="line-height: 1.4;">{{ info.message }}</span>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+      <div class="mt-2 text-muted">Đang tải thông tin học phí...</div>
+    </div>
+  } @else {
+    <!-- Metrics Row -->
+    <div class="row g-4 mb-4">
+      <!-- Balance -->
+      <div class="col-12 col-md-6">
+        <div class="custom-card shadow-sm mb-0">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <span class="text-muted small">Số dư ví học phí</span>
+              <h2 class="my-2 fw-extrabold text-teal" style="color: #13c2c2; font-size: 32px; font-weight: 800;">
+                {{ formatCurrency(wallet()?.balance) }}
+              </h2>
+            </div>
+            <div class="rounded-circle d-flex align-items-center justify-content-center text-white" 
+                 style="background-color: #13c2c2; width: 50px; height: 50px; font-size: 24px;">
+              <i class="bi bi-wallet2"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Remaining Sessions -->
+      <div class="col-12 col-md-6">
+        <div class="custom-card shadow-sm mb-0">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <span class="text-muted small">Số buổi học còn lại</span>
+              <h2 class="my-2 fw-extrabold text-primary" style="color: #1890ff; font-size: 32px; font-weight: 800;">
+                {{ wallet()?.remainingSessions ?? 0 }} Buổi
+              </h2>
+            </div>
+            <div class="rounded-circle d-flex align-items-center justify-content-center text-white" 
+                 style="background-color: #1890ff; width: 50px; height: 50px; font-size: 24px;">
+              <i class="bi bi-hourglass-split"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transactions Card -->
+    <div class="custom-card shadow-sm">
+      <h5 class="fw-bold border-bottom pb-2 mb-3">
+        <i class="bi bi-clock-history text-primary me-2"></i>Lịch sử giao dịch ví học phí
+      </h5>
+
+      @if (transactions().length === 0) {
+        <div class="text-center py-4 text-muted">Chưa có giao dịch phát sinh nào</div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Loại giao dịch</th>
+                <th>Số tiền</th>
+                <th>Mô tả</th>
+                <th>Thời gian</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (tx of transactions(); track tx.id) {
+                <tr>
+                  <td>
+                    <span class="custom-badge" 
+                          [ngClass]="tx.type === 'Deposit' ? 'success' : tx.type === 'Deduction' ? 'danger' : 'warning'">
+                      {{ getTxTypeName(tx.type) }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="fw-bold" [ngClass]="tx.type === 'Deduction' ? 'text-danger' : 'text-success'">
+                      {{ tx.type === 'Deduction' ? '-' : '+' }}{{ tx.amount.toLocaleString('vi-VN') }} VND
+                    </span>
+                  </td>
+                  <td><span class="small">{{ tx.description }}</span></td>
+                  <td><span class="small text-muted">{{ formatDateTime(tx.transactionDate) }}</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+</div>

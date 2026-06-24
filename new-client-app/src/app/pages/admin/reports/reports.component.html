@@ -1,0 +1,75 @@
+<div>
+  <!-- Header -->
+  <div class="mb-4">
+    <h1 class="page-title mb-0">Báo Cáo Hệ Thống</h1>
+    <p class="text-muted mb-0">Tải xuống các báo cáo thống kê, biểu đồ tài chính, và tệp xuất dữ liệu chính thức.</p>
+  </div>
+
+  <!-- Export Buttons Cards -->
+  <div class="row g-4 mb-4">
+    <!-- Excel Export Card -->
+    <div class="col-12 col-md-6">
+      <div class="custom-card shadow-sm h-100 mb-0">
+        <h5 class="fw-bold d-flex align-items-center gap-2 mb-3">
+          <i class="bi bi-file-earmark-excel text-success" style="font-size: 22px;"></i>
+          <span>Xuất Báo Cáo Học Phí Excel</span>
+        </h5>
+        <p class="text-muted">Xuất bảng tính Excel chi tiết chứa toàn bộ lịch sử đóng học phí của học sinh, bao gồm ngày đóng, số tiền, số buổi học và mô tả chi tiết.</p>
+        <hr class="text-muted opacity-25My mb-3" />
+        <button (click)="exportExcel()" class="btn d-flex align-items-center gap-2" 
+                [disabled]="exportingExcel()"
+                style="background-color: #198754; color: #fff; border: none; font-weight: 600;">
+          @if (exportingExcel()) {
+            <span class="spinner-border spinner-border-sm"></span> Đang tải...
+          } @else {
+            <i class="bi bi-download"></i> Xuất file Excel (.xlsx)
+          }
+        </button>
+      </div>
+    </div>
+
+    <!-- PDF Export Card -->
+    <div class="col-12 col-md-6">
+      <div class="custom-card shadow-sm h-100 mb-0">
+        <h5 class="fw-bold d-flex align-items-center gap-2 mb-3">
+          <i class="bi bi-file-earmark-pdf text-danger" style="font-size: 22px;"></i>
+          <span>Xuất Báo Cáo Tổng Hợp PDF</span>
+        </h5>
+        <p class="text-muted">Tạo báo cáo tóm tắt chuyên nghiệp dưới định dạng PDF chứa các thông tin tổng hợp: tổng số học sinh đang học, giảng viên, lớp học đang mở và doanh thu.</p>
+        <hr class="text-muted opacity-25 mb-3" />
+        <button (click)="exportPdf()" class="btn btn-danger d-flex align-items-center gap-2"
+                [disabled]="exportingPdf()"
+                style="font-weight: 600;">
+          @if (exportingPdf()) {
+            <span class="spinner-border spinner-border-sm"></span> Đang tải...
+          } @else {
+            <i class="bi bi-download"></i> Tải báo cáo PDF
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div class="custom-card shadow-sm">
+    <h5 class="fw-bold d-flex align-items-center gap-2 mb-3">
+      <i class="bi bi-graph-up-arrow text-primary"></i>
+      <span>Biểu Đồ Xu Hướng Doanh Thu Hàng Tháng</span>
+    </h5>
+    
+    @if (loadingChart()) {
+      <div class="text-center py-5">
+        <div class="spinner-border spinner-border-sm text-primary"></div>
+        <span class="ms-2 text-muted">Đang tải dữ liệu biểu đồ...</span>
+      </div>
+    } @else if (chartError()) {
+      <div class="alert alert-danger" role="alert">
+        {{ chartError() }}
+      </div>
+    } @else {
+      <div class="chart-container position-relative" style="height: 350px;">
+        <canvas #revenueChartCanvas></canvas>
+      </div>
+    }
+  </div>
+</div>

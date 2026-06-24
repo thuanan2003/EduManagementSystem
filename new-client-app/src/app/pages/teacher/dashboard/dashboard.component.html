@@ -1,0 +1,86 @@
+<div>
+  <!-- Header -->
+  <div class="mb-4">
+    <h1 class="page-title">Chào mừng, {{ teacher()?.fullName || 'Giảng viên' }}!</h1>
+    <p class="text-muted">Quản lý lớp học của bạn, xem lịch giảng dạy và theo dõi điểm danh học viên.</p>
+  </div>
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+      <div class="mt-2 text-muted">Đang tải trang tổng quan giảng viên...</div>
+    </div>
+  } @else {
+    <!-- Stats and Actions -->
+    <div class="row g-4 mb-4">
+      <!-- Class Count Card -->
+      <div class="col-12 col-md-4">
+        <div class="custom-card shadow-sm h-100 mb-0">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <span class="text-muted small">Số lớp phụ trách</span>
+              <h2 class="my-2 fw-extrabold text-primary" style="color: #1890ff; font-size: 32px; font-weight: 800;">
+                {{ classes().length }} Lớp
+              </h2>
+            </div>
+            <div class="rounded-circle d-flex align-items-center justify-content-center text-white" 
+                 style="background-color: #1890ff; width: 50px; height: 50px; font-size: 24px;">
+              <i class="bi bi-book"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="col-12 col-md-8">
+        <div class="custom-card shadow-sm h-100 mb-0">
+          <h5 class="fw-bold border-bottom pb-2 mb-3">Thao tác giảng dạy</h5>
+          <div class="d-flex gap-3">
+            <button (click)="navigateTo('/teacher/attendance')" class="btn btn-primary d-flex align-items-center gap-2">
+              <i class="bi bi-calendar-check"></i> Điểm danh lớp học
+            </button>
+            <button (click)="navigateTo('/teacher/schedule')" class="btn btn-outline-secondary d-flex align-items-center gap-2">
+              <i class="bi bi-calendar3"></i> Xem lịch dạy tuần
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Classes List Card -->
+    <div class="custom-card shadow-sm">
+      <h5 class="fw-bold border-bottom pb-2 mb-3">
+        <i class="bi bi-journal-text text-primary me-2"></i>Các lớp học phụ trách hoạt động
+      </h5>
+
+      @if (classes().length === 0) {
+        <div class="text-center py-4 text-muted">Bạn chưa được phân công lớp học nào.</div>
+      } @else {
+        <div class="d-flex flex-column gap-3">
+          @for (item of classes(); track item.id) {
+            <div class="p-3 border rounded d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 transition-all"
+                 style="border-radius: 10px;">
+              <div class="d-flex align-items-start gap-3">
+                <div class="rounded bg-light text-primary d-flex align-items-center justify-content-center" 
+                     style="width: 44px; height: 44px; font-size: 20px; color: var(--primary-color) !important; background-color: var(--primary-light) !important;">
+                  <i class="bi bi-journal-bookmark"></i>
+                </div>
+                <div>
+                  <strong class="text-dark fs-6">{{ item.className }} ({{ item.classCode }})</strong>
+                  <div class="text-muted small mt-1 d-flex gap-3">
+                    <span><i class="bi bi-calendar-event me-1"></i>Lịch học: {{ getVnDayName(item.scheduleDay) }} ({{ item.startTime }} - {{ item.endTime }})</span>
+                    <span><i class="bi bi-geo-alt me-1"></i>Phòng: {{ item.room || 'N/A' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <button (click)="goToAttendance(item.id)" class="btn btn-outline-primary-custom btn-sm d-flex align-items-center gap-1">
+                <i class="bi bi-check2-square"></i> Điểm danh lớp này
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

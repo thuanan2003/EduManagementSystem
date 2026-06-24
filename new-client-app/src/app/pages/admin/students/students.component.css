@@ -1,0 +1,31 @@
+/* Students Component Styles */
+.custom-badge {
+  padding: 6px 12px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 12px;
+}
+.btn-outline-primary-custom {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  background-color: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 10px;
+}
+.btn-outline-primary-custom:hover {
+  color: white;
+  background-color: var(--primary-color);
+}
+.btn-outline-danger-custom {
+  color: #ff4d4f;
+  border-color: #ff4d4f;
+  background-color: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 10px;
+}
+.btn-outline-danger-custom:hover {
+  color: white;
+  background-color: #ff4d4f;
+}

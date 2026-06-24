@@ -1,0 +1,103 @@
+<div>
+  <!-- Header -->
+  <div class="mb-4">
+    <h1 class="page-title">Xin chào, {{ user()?.fullName || 'Học viên' }}!</h1>
+    <p class="text-muted">Xem nhanh lịch học và số dư tài khoản học phí của bạn.</p>
+  </div>
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+      <div class="mt-2 text-muted">Đang tải trang tổng quan học viên...</div>
+    </div>
+  } @else {
+    <!-- Metrics Row -->
+    <div class="row g-4 mb-4">
+      <!-- Tuition Wallet Card -->
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="custom-card shadow-sm h-100 mb-0">
+          <h5 class="fw-bold border-bottom pb-2 mb-3 d-flex align-items-center gap-2">
+            <i class="bi bi-wallet2 text-teal" style="color: #13c2c2;"></i>
+            <span>Ví học phí của tôi</span>
+          </h5>
+          <div class="py-2">
+            <span class="text-muted small">Số dư ví tiền</span>
+            <h3 class="my-1 fw-bold" style="color: #13c2c2; font-size: 26px;">
+              {{ formatCurrency(wallet()?.balance) }}
+            </h3>
+            <div class="mt-2">
+              <span class="custom-badge" [ngClass]="(wallet()?.remainingSessions ?? 0) < 3 ? 'danger' : 'success'">
+                Số buổi còn lại: {{ wallet()?.remainingSessions ?? 0 }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Navigation Card -->
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="custom-card shadow-sm h-100 mb-0">
+          <h5 class="fw-bold border-bottom pb-2 mb-3 d-flex align-items-center gap-2">
+            <i class="bi bi-compass text-primary"></i>
+            <span>Liên kết nhanh</span>
+          </h5>
+          <div class="d-flex flex-column gap-2 mt-2">
+            <button (click)="navigateTo('/student/schedule')" class="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2" style="background-color: var(--primary-color);">
+              <i class="bi bi-calendar3"></i> Xem lịch học chi tiết
+            </button>
+            <button (click)="navigateTo('/student/classes')" class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2">
+              <i class="bi bi-mortarboard"></i> Lớp học đã tham gia
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications Card -->
+    <div class="custom-card shadow-sm">
+      <h5 class="fw-bold border-bottom pb-2 mb-3 d-flex align-items-center gap-2">
+        <i class="bi bi-bell text-warning" style="font-size: 20px;"></i>
+        <span>Thông báo & Cảnh báo ví</span>
+        @if (unreadCount() > 0) {
+          <span class="badge bg-danger rounded-pill">{{ unreadCount() }}</span>
+        }
+      </h5>
+
+      @if (notifications().length === 0) {
+        <div class="text-center py-4 text-muted">
+          Không có cảnh báo hoặc thông báo nào tại thời điểm này.
+        </div>
+      } @else {
+        <div class="d-flex flex-column gap-3">
+          @for (item of notifications(); track item.id) {
+            <div class="p-3 border rounded d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 transition-all"
+                 [style.background-color]="item.isRead ? 'transparent' : '#f9f0ff'"
+                 [style.border-color]="item.isRead ? 'var(--border-color)' : '#d3adf7'">
+              <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <strong class="text-dark fs-6">{{ item.title }}</strong>
+                  @if (!item.isRead) {
+                    <span class="badge bg-danger">Mới</span>
+                  }
+                </div>
+                <p class="text-dark mb-2" style="font-size: 13.5px; line-height: 1.4;">{{ item.message }}</p>
+                <span class="text-muted small" style="font-size: 11px;">Thời gian: {{ formatDateTime(item.sentAt) }}</span>
+              </div>
+
+              <div class="d-flex gap-2">
+                @if (!item.isRead) {
+                  <button (click)="markAsRead(item.id)" class="btn btn-outline-success btn-sm d-flex align-items-center gap-1">
+                    <i class="bi bi-check2"></i> Đã đọc
+                  </button>
+                }
+                <button (click)="deleteNotification(item.id)" class="btn btn-outline-danger btn-sm">
+                  <i class="bi bi-trash"></i> Xóa
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

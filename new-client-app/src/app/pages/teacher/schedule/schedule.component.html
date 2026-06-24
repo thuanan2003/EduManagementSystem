@@ -1,0 +1,70 @@
+<div>
+  <!-- Header -->
+  <div class="mb-4">
+    <h1 class="page-title">Lịch Giảng Dạy</h1>
+    <p class="text-muted">Xem chi tiết thời khóa biểu, thời gian và địa điểm phòng học cho các lớp học bạn phụ trách.</p>
+  </div>
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+      <div class="mt-2 text-muted">Đang tải lịch dạy...</div>
+    </div>
+  } @else if (classes().length === 0) {
+    <div class="text-center py-5 text-muted custom-card shadow-sm">
+      <i class="bi bi-calendar-x" style="font-size: 44px;"></i>
+      <p class="mt-2 mb-0">Bạn chưa được phân công lịch dạy nào.</p>
+    </div>
+  } @else {
+    <div class="row g-4">
+      @for (item of classes(); track item.id) {
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="custom-card shadow-sm h-100 mb-0 hover-card transition-all">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <span class="badge bg-purple-subtle text-purple border border-purple-subtle mb-2">{{ item.classCode }}</span>
+                <h5 class="fw-bold mb-0" style="color: var(--text-main); font-size: 17px; line-height: 1.3;">{{ item.className }}</h5>
+                <span class="text-muted small mt-1 d-inline-block">Khóa học: {{ item.courseName }}</span>
+              </div>
+              <div class="rounded d-flex align-items-center justify-content-center" 
+                   style="background-color: #f9f0ff; width: 40px; height: 40px; font-size: 18px; color: #722ed1;">
+                <i class="bi bi-calendar-event"></i>
+              </div>
+            </div>
+
+            <div class="border-top pt-3 mt-3">
+              <div class="d-flex flex-column gap-3">
+                <!-- Schedule Day -->
+                <div class="d-flex align-items-start gap-2.5">
+                  <i class="bi bi-calendar3 text-muted" style="font-size: 16px;"></i>
+                  <div>
+                    <span class="text-muted small d-block" style="line-height: 1;">Ngày dạy</span>
+                    <strong class="text-dark small">{{ getVnDayName(item.scheduleDay) }}</strong>
+                  </div>
+                </div>
+
+                <!-- Time Slot -->
+                <div class="d-flex align-items-start gap-2.5">
+                  <i class="bi bi-clock text-muted" style="font-size: 16px;"></i>
+                  <div>
+                    <span class="text-muted small d-block" style="line-height: 1;">Khung giờ</span>
+                    <strong class="text-dark small">{{ item.startTime }} - {{ item.endTime }}</strong>
+                  </div>
+                </div>
+
+                <!-- Classroom -->
+                <div class="d-flex align-items-start gap-2.5">
+                  <i class="bi bi-geo-alt text-muted" style="font-size: 16px;"></i>
+                  <div>
+                    <span class="text-muted small d-block" style="line-height: 1;">Phòng học</span>
+                    <strong class="text-dark small">{{ item.room || 'Chưa xếp phòng' }}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

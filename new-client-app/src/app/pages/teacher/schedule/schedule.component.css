@@ -1,0 +1,16 @@
+.bg-purple-subtle {
+  background-color: #f9f0ff !important;
+}
+.text-purple {
+  color: #722ed1 !important;
+}
+.border-purple-subtle {
+  border-color: #d3adf7 !important;
+}
+.hover-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08) !important;
+}
+.gap-2\.5 {
+  gap: 10px;
+}

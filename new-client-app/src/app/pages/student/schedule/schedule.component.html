@@ -1,0 +1,150 @@
+<div>
+  <!-- Header -->
+  <div class="mb-4">
+    <h1 class="page-title">Thời Khóa Biểu & Xin Nghỉ Học</h1>
+    <p class="text-muted">Xem lịch học hàng tuần và gửi yêu cầu xin nghỉ phép trước khi buổi học bắt đầu.</p>
+  </div>
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+      <div class="mt-2 text-muted">Đang tải lịch học của bạn...</div>
+    </div>
+  } @else {
+    <div class="row g-4">
+      <!-- Left Column: Weekly classes -->
+      <div class="col-12 col-lg-7">
+        <div class="custom-card shadow-sm h-100 mb-0">
+          <h5 class="fw-bold border-bottom pb-2 mb-3">
+            <i class="bi bi-calendar3 text-primary me-2"></i>Lớp học trong tuần
+          </h5>
+          
+          @if (classes().length === 0) {
+            <div class="text-center py-5 text-muted">
+              Bạn chưa đăng ký lớp học nào.
+            </div>
+          } @else {
+            <div class="d-flex flex-column gap-3">
+              @for (item of classes(); track item.id) {
+                <div class="card p-3 border" style="border-radius: 10px;">
+                  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                      <strong class="text-dark fs-6">{{ item.className }}</strong>
+                      <div class="text-muted small mt-1 d-flex gap-3">
+                        <span><i class="bi bi-calendar-event me-1"></i>{{ getVnDayName(item.scheduleDay) }}</span>
+                        <span><i class="bi bi-clock me-1"></i>{{ item.startTime }} - {{ item.endTime }}</span>
+                        <span><i class="bi bi-geo-alt me-1"></i>{{ item.room || 'Chưa xếp phòng' }}</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      @if (canRequestAbsence(item).allowed) {
+                        <button (click)="openRequestModal(item)" class="btn btn-outline-primary-custom btn-sm d-flex align-items-center gap-1">
+                          <i class="bi bi-journal-text"></i> Xin nghỉ phép
+                        </button>
+                      } @else {
+                        <span class="badge bg-light text-muted border">Khóa xin nghỉ phép</span>
+                      }
+                    </div>
+                  </div>
+
+                  @if (!canRequestAbsence(item).allowed) {
+                    <div class="alert alert-warning py-1 px-2 border-0 mt-2 small mb-0" style="border-radius: 6px; font-size: 11px;">
+                      <i class="bi bi-info-circle-fill me-1"></i>
+                      {{ canRequestAbsence(item).message }}
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Right Column: Requests History -->
+      <div class="col-12 col-lg-5">
+        <div class="custom-card shadow-sm h-100 mb-0">
+          <h5 class="fw-bold border-bottom pb-2 mb-3">
+            <i class="bi bi-clock-history text-warning me-2"></i>Lịch sử xin nghỉ phép
+          </h5>
+
+          @if (requests().length === 0) {
+            <div class="text-center py-4 text-muted">Chưa có yêu cầu xin phép nào.</div>
+          } @else {
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Lớp học</th>
+                    <th>Thời gian</th>
+                    <th>Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (req of requests(); track req.id) {
+                    <tr>
+                      <td class="fw-semibold">{{ req.className }}</td>
+                      <td>
+                        <span class="small text-muted">{{ formatDateTime(req.requestedAt) }}</span>
+                        <div class="small mt-1 text-dark">{{ req.reason }}</div>
+                      </td>
+                      <td>
+                        <span class="custom-badge" 
+                              [ngClass]="req.status === 'Approved' ? 'success' : req.status === 'Rejected' ? 'danger' : 'warning'">
+                          {{ req.status }}
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Request Modal -->
+@if (modalOpen()) {
+  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 1050;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 12px;">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold">Gửi Yêu Cầu Xin Nghỉ Phép</h5>
+          <button type="button" class="btn-close" (click)="closeModal()"></button>
+        </div>
+
+        <div class="modal-body py-4">
+          <div class="mb-3">
+            <span class="text-muted small d-block">Yêu cầu nghỉ phép lớp học:</span>
+            <strong class="fs-6 text-dark">{{ selectedClass()?.className }}</strong>
+            <div class="text-muted small mt-1">Lịch học: {{ getVnDayName(selectedClass()?.scheduleDay || '') }} ({{ selectedClass()?.startTime }} - {{ selectedClass()?.endTime }})</div>
+          </div>
+
+          <hr class="opacity-25" />
+
+          <form [formGroup]="requestForm">
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Lý do xin nghỉ học *</label>
+              <textarea class="form-control" formControlName="reason" rows="3" 
+                        placeholder="Vui lòng cung cấp lý do chi tiết (e.g. bị ốm, gia đình bận việc có đơn xin)..."></textarea>
+              @if (hasControlError('reason', 'required')) {
+                <div class="text-danger small mt-1">Lý do xin nghỉ là bắt buộc!</div>
+              }
+            </div>
+          </form>
+        </div>
+
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light" (click)="closeModal()">Hủy</button>
+          <button type="button" class="btn btn-primary" (click)="onSubmit()" 
+                  [disabled]="requestForm.invalid || submitting()">
+            Gửi yêu cầu
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

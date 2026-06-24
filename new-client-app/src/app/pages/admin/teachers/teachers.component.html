@@ -1,0 +1,235 @@
+<div>
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+    <div>
+      <h1 class="page-title mb-0">Giảng Viên</h1>
+      <p class="text-muted mb-0">Tạo, cập nhật và quản lý hồ sơ thông tin giảng viên hệ thống.</p>
+    </div>
+    <button (click)="openCreateModal()" class="btn btn-primary d-flex align-items-center gap-2">
+      <i class="bi bi-plus-lg"></i> Thêm Giảng Viên Mới
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="custom-card shadow-sm mb-4">
+    <div class="row g-3">
+      <div class="col-12 col-md-12">
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control border-start-0 ps-0" 
+                 placeholder="Tìm kiếm giảng viên theo tên, email, số điện thoại..." 
+                 [(ngModel)]="keyword" (ngModelChange)="onSearch()" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Teachers List -->
+  <div class="custom-card shadow-sm p-0 overflow-hidden">
+    @if (loading()) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <div class="mt-2 text-muted">Đang tải danh sách giảng viên...</div>
+      </div>
+    } @else if (filteredTeachers().length === 0) {
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-person-badge" style="font-size: 40px;"></i>
+        <p class="mt-2 mb-0">Không tìm thấy giảng viên nào.</p>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th>Mã GV</th>
+              <th>Họ và tên</th>
+              <th>Chuyên môn</th>
+              <th>Số điện thoại</th>
+              <th>Email</th>
+              <th>Lương cơ bản</th>
+              <th>Thưởng</th>
+              <th>Số lớp</th>
+              <th>Trạng thái</th>
+              <th class="text-center">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (teacher of filteredTeachers(); track teacher.id) {
+              <tr>
+                <td><span class="fw-bold">{{ teacher.teacherCode }}</span></td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <img [src]="teacher.avatarUrl || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'" 
+                         class="rounded-circle border" 
+                         style="width: 32px; height: 32px; object-fit: cover;"
+                         (error)="onAvatarError($event)" />
+                    <span class="fw-semibold">{{ teacher.fullName }}</span>
+                  </div>
+                </td>
+                <td><span class="badge bg-secondary-subtle text-dark">{{ teacher.specialization }}</span></td>
+                <td>{{ teacher.phone }}</td>
+                <td>{{ teacher.email }}</td>
+                <td class="fw-semibold">{{ formatCurrency(teacher.monthlySalary) }}</td>
+                <td class="text-success fw-semibold">{{ formatCurrency(teacher.bonus) }}</td>
+                <td><span class="badge bg-info-subtle text-info border border-info-subtle">{{ teacher.classCount }} lớp</span></td>
+                <td>
+                  <span class="custom-badge" [ngClass]="teacher.status === 'Active' ? 'success' : 'danger'">
+                    {{ teacher.status }}
+                  </span>
+                </td>
+                <td>
+                  <div class="d-flex justify-content-center gap-2">
+                    <button (click)="openEditModal(teacher)" class="btn btn-light border btn-sm" style="padding: 4px 10px;">
+                      <i class="bi bi-pencil"></i> Sửa
+                    </button>
+                    <button (click)="deleteTeacher(teacher.id)" class="btn btn-outline-danger-custom d-flex align-items-center gap-1">
+                      <i class="bi bi-trash"></i> Xóa
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  <!-- Add/Edit Modal -->
+  @if (modalOpen()) {
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 1050;">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px;">
+          <div class="modal-header border-0 pb-0">
+            <h5 class="modal-title fw-bold">
+              {{ editingId() ? 'Cập Nhật Hồ Sơ Giảng Viên' : 'Thêm Giảng Viên Mới' }}
+            </h5>
+            <button type="button" class="btn-close" (click)="closeModal()"></button>
+          </div>
+
+          <div class="modal-body py-4">
+            @if (submitError()) {
+              <div class="alert alert-danger py-2 px-3 text-center mb-3" style="font-size: 13px; border-radius: 8px;">
+                {{ submitError() }}
+              </div>
+            }
+
+            <form [formGroup]="teacherForm">
+              <div class="row g-3">
+                <!-- Full Name -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold small">Họ và tên *</label>
+                  <input type="text" class="form-control" formControlName="fullName" placeholder="Nhập họ và tên giảng viên" />
+                  @if (hasControlError('fullName', 'required')) {
+                    <div class="text-danger small mt-1">Vui lòng nhập họ tên!</div>
+                  }
+                </div>
+
+                <!-- Specialization -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold small">Chuyên môn / Bộ môn *</label>
+                  <input type="text" class="form-control" formControlName="specialization" placeholder="e.g. Toán học, Tiếng Anh" />
+                  @if (hasControlError('specialization', 'required')) {
+                    <div class="text-danger small mt-1">Vui lòng điền bộ môn chuyên môn!</div>
+                  }
+                </div>
+
+                <!-- Phone -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold small">Số điện thoại *</label>
+                  <input type="text" class="form-control" formControlName="phone" placeholder="Số điện thoại" />
+                  @if (hasControlError('phone', 'required')) {
+                    <div class="text-danger small mt-1">Vui lòng điền số điện thoại!</div>
+                  }
+                </div>
+
+                <!-- Email -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold small">Email *</label>
+                  <input type="email" class="form-control" formControlName="email" placeholder="Email đăng nhập" />
+                  @if (hasControlError('email', 'required')) {
+                    <div class="text-danger small mt-1">Vui lòng nhập email!</div>
+                  }
+                  @if (hasControlError('email', 'email')) {
+                    <div class="text-danger small mt-1">Email không đúng định dạng!</div>
+                  }
+                </div>
+
+                <!-- Monthly Salary -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold small">Lương hàng tháng (VND) *</label>
+                  <input type="number" class="form-control" formControlName="monthlySalary" placeholder="Lương hàng tháng" />
+                  @if (hasControlError('monthlySalary', 'required')) {
+                    <div class="text-danger small mt-1">Vui lòng nhập lương cơ bản!</div>
+                  }
+                  @if (hasControlError('monthlySalary', 'min')) {
+                    <div class="text-danger small mt-1">Lương tối thiểu là 0 VND!</div>
+                  }
+                </div>
+
+                <!-- Bonus -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold small">Khoản thưởng thêm (VND)</label>
+                  <input type="number" class="form-control" formControlName="bonus" placeholder="Khoản thưởng thêm" />
+                  @if (hasControlError('bonus', 'min')) {
+                    <div class="text-danger small mt-1">Khoản thưởng tối thiểu là 0 VND!</div>
+                  }
+                </div>
+
+                <!-- Status -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold small">Trạng thái hoạt động</label>
+                  <select class="form-select" formControlName="status">
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </div>
+
+                <!-- Photo Upload -->
+                <div class="col-12">
+                  <label class="form-label fw-semibold small">Ảnh chân dung</label>
+                  <div class="d-flex align-items-center gap-3">
+                    <img [src]="avatarPreview() || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'" 
+                         class="rounded-circle border" 
+                         style="width: 50px; height: 50px; object-fit: cover;"
+                         (error)="onAvatarError($event)" />
+                    <label class="btn btn-sm btn-secondary-light position-relative overflow-hidden cursor-pointer">
+                      @if (uploading()) {
+                        <span class="spinner-border spinner-border-sm me-1"></span> Đang tải...
+                      } @else {
+                        Tải ảnh lên
+                      }
+                      <input type="file" accept="image/*" class="position-absolute opacity-0" 
+                             style="left:0; top:0; width:100%; height:100%; cursor:pointer;" 
+                             (change)="handleAvatarUpload($event)" />
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Password (only for creation) -->
+                @if (!editingId()) {
+                  <div class="col-12">
+                    <label class="form-label fw-semibold small">Mật khẩu khởi tạo *</label>
+                    <input type="password" class="form-control" formControlName="password" 
+                           placeholder="Tối thiểu 6 ký tự, gồm chữ hoa + số" />
+                    @if (hasControlError('password', 'required')) {
+                      <div class="text-danger small mt-1">Vui lòng nhập mật khẩu khởi tạo!</div>
+                    }
+                  </div>
+                }
+              </div>
+            </form>
+          </div>
+
+          <div class="modal-footer border-0 pt-0">
+            <button type="button" class="btn btn-light" (click)="closeModal()">Hủy</button>
+            <button type="button" class="btn btn-primary" (click)="onSubmit()" 
+                    [disabled]="teacherForm.invalid || uploading()">
+              {{ editingId() ? 'Lưu thay đổi' : 'Thêm mới' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,139 @@
+<div>
+  <!-- Header -->
+  <div class="mb-4">
+    <h1 class="page-title">Điểm Danh Học Viên</h1>
+    <p class="text-muted">Chọn lớp và ngày học để ghi nhận chuyên cần của học sinh và thực hiện khấu trừ số buổi học phí.</p>
+  </div>
+
+  <!-- Filters Card -->
+  <div class="custom-card shadow-sm mb-4">
+    <div class="row g-3 align-items-end">
+      <div class="col-12 col-md-6">
+        <label class="form-label fw-semibold small">Lớp học phụ trách *</label>
+        <select class="form-select" [(ngModel)]="selectedClassId" (ngModelChange)="onClassChange($event)">
+          <option [ngValue]="undefined">-- Chọn lớp học --</option>
+          @for (c of classes(); track c.id) {
+            <option [value]="c.id">{{ c.className }} ({{ c.classCode }})</option>
+          }
+        </select>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label fw-semibold small">Ngày điểm danh *</label>
+        <input type="date" class="form-control" [(ngModel)]="attendanceDate" (ngModelChange)="onDateChange()" />
+      </div>
+    </div>
+  </div>
+
+  @if (selectedClassId) {
+    @if (rosterLoading() || walletsLoading()) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <div class="mt-2 text-muted">Đang tải danh sách học sinh và kiểm tra ví học phí...</div>
+      </div>
+    } @else {
+      <!-- Roster Card -->
+      <div class="custom-card shadow-sm p-0 overflow-hidden">
+        <div class="p-3 border-bottom bg-light d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <h5 class="fw-bold mb-0 text-dark" style="font-size: 16px;">
+            <i class="bi bi-people me-2" style="color: var(--primary-color);"></i>
+            Sĩ số lớp: {{ classDetail()?.className }}
+          </h5>
+          
+          <!-- Quick select shortcuts -->
+          <div class="d-flex gap-2">
+            <button (click)="setAllStatus('Present')" class="btn btn-sm btn-light border" style="font-size: 12px; font-weight: 500;">Có mặt tất cả</button>
+            <button (click)="setAllStatus('Excused')" class="btn btn-sm btn-light border" style="font-size: 12px; font-weight: 500;">Phép tất cả</button>
+            <button (click)="setAllStatus('Unexcused')" class="btn btn-sm btn-light border" style="font-size: 12px; font-weight: 500;">Không phép tất cả</button>
+          </div>
+        </div>
+
+        @if (students().length === 0) {
+          <div class="text-center py-5 text-muted">Lớp học này hiện chưa có học sinh đăng ký.</div>
+        } @else {
+          <div class="table-responsive">
+            <table class="table mb-0">
+              <thead>
+                <tr>
+                  <th>Mã học sinh</th>
+                  <th>Học viên</th>
+                  <th>Cảnh báo học phí</th>
+                  <th>Điểm danh</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (student of students(); track student.id) {
+                  <tr>
+                    <td><span class="fw-bold">{{ student.studentCode }}</span></td>
+                    <td><span class="fw-semibold">{{ student.fullName }}</span></td>
+                    <td>
+                      <!-- Wallet Status Warnings -->
+                      @if (getWallet(student.id); as wallet) {
+                        <div class="d-flex align-items-center gap-2">
+                          @if (wallet.remainingSessions <= 0) {
+                            <span class="custom-badge danger">Hết buổi (0 buổi)</span>
+                            <span class="text-danger small fw-bold d-flex align-items-center gap-1">
+                              <i class="bi bi-exclamation-octagon-fill"></i> Ví đã cạn tiền!
+                            </span>
+                          } @else if (wallet.remainingSessions < 3) {
+                            <span class="custom-badge warning">Cảnh báo ({{ wallet.remainingSessions }} buổi)</span>
+                            <span class="text-warning small d-flex align-items-center gap-1">
+                              <i class="bi bi-exclamation-triangle-fill"></i> Sắp hết học phí
+                            </span>
+                          } @else {
+                            <span class="custom-badge success">Ổn định ({{ wallet.remainingSessions }} buổi)</span>
+                            <span class="text-muted small">({{ wallet.balance.toLocaleString('vi-VN') }} VND)</span>
+                          }
+                        </div>
+                      } @else {
+                        <span class="spinner-border spinner-border-sm text-secondary"></span>
+                      }
+                    </td>
+                    <td>
+                      <!-- Radio Group -->
+                      <div class="btn-group border rounded" role="group" style="padding: 2px; background-color: #f8f9fa;">
+                        <input type="radio" class="btn-check" [name]="'status_' + student.id" [id]="'p_' + student.id" 
+                               value="Present" [checked]="attendanceMap[student.id] === 'Present'"
+                               (change)="onStatusChange(student.id, 'Present')">
+                        <label class="btn btn-sm border-0 rounded px-3" [class.btn-success]="attendanceMap[student.id] === 'Present'" 
+                               [class.btn-light]="attendanceMap[student.id] !== 'Present'" [style.color]="attendanceMap[student.id] !== 'Present' ? '#6c757d' : ''" [for]="'p_' + student.id">Có mặt</label>
+                        
+                        <input type="radio" class="btn-check" [name]="'status_' + student.id" [id]="'e_' + student.id" 
+                               value="Excused" [checked]="attendanceMap[student.id] === 'Excused'"
+                               (change)="onStatusChange(student.id, 'Excused')">
+                        <label class="btn btn-sm border-0 rounded px-3" [class.btn-warning]="attendanceMap[student.id] === 'Excused'" 
+                               [class.btn-light]="attendanceMap[student.id] !== 'Excused'" [style.color]="attendanceMap[student.id] !== 'Excused' ? '#6c757d' : ''" [for]="'e_' + student.id">Có phép</label>
+                        
+                        <input type="radio" class="btn-check" [name]="'status_' + student.id" [id]="'u_' + student.id" 
+                               value="Unexcused" [checked]="attendanceMap[student.id] === 'Unexcused'"
+                               (change)="onStatusChange(student.id, 'Unexcused')">
+                        <label class="btn btn-sm border-0 rounded px-3" [class.btn-danger]="attendanceMap[student.id] === 'Unexcused'" 
+                               [class.btn-light]="attendanceMap[student.id] !== 'Unexcused'" [style.color]="attendanceMap[student.id] !== 'Unexcused' ? '#6c757d' : ''" [for]="'u_' + student.id">Không phép</label>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Submit button panel -->
+          <div class="p-3 bg-light border-top text-end">
+            <button (click)="submitAttendance()" class="btn btn-primary px-4 py-2" [disabled]="submitting()">
+              @if (submitting()) {
+                <span class="spinner-border spinner-border-sm me-1"></span> Đang gửi...
+              } @else {
+                <i class="bi bi-check-circle me-1"></i> Lưu và Trừ Ví Học Phí
+              }
+            </button>
+          </div>
+        }
+      </div>
+    }
+  } @else {
+    <div class="alert alert-info py-3 px-4 border-0 rounded-3 d-flex align-items-center gap-2" style="background-color: var(--status-info-bg); color: var(--status-info);">
+      <i class="bi bi-info-circle-fill" style="font-size: 20px;"></i>
+      <div>Vui lòng chọn lớp học phụ trách từ danh sách thả xuống ở trên để tải danh sách học sinh điểm danh.</div>
+    </div>
+  }
+</div>

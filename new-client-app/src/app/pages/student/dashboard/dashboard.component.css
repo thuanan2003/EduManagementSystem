@@ -1,0 +1,10 @@
+/* Student Dashboard Component Styles */
+.custom-badge {
+  padding: 6px 12px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 12px;
+}
+.transition-all {
+  transition: all 0.2s ease-in-out;
+}

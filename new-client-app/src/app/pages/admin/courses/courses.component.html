@@ -1,0 +1,210 @@
+<div>
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+    <div>
+      <h1 class="page-title mb-0">Khóa Học</h1>
+      <p class="text-muted mb-0">Thiết lập học phí, số buổi học và quản lý danh mục khóa học.</p>
+    </div>
+    <button (click)="openCreateModal()" class="btn btn-primary d-flex align-items-center gap-2">
+      <i class="bi bi-plus-lg"></i> Thêm Khóa Học Mới
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="custom-card shadow-sm mb-4">
+    <div class="row g-3">
+      <div class="col-12 col-md-12">
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control border-start-0 ps-0" 
+                 placeholder="Tìm kiếm khóa học theo tên, môn học, mã khóa học..." 
+                 [(ngModel)]="keyword" (ngModelChange)="onSearch()" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Courses List -->
+  <div class="custom-card shadow-sm p-0 overflow-hidden">
+    @if (loading()) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <div class="mt-2 text-muted">Đang tải danh sách khóa học...</div>
+      </div>
+    } @else if (filteredCourses().length === 0) {
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-book" style="font-size: 40px;"></i>
+        <p class="mt-2 mb-0">Không tìm thấy khóa học nào.</p>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th>Mã KH</th>
+              <th>Tên khóa học</th>
+              <th>Môn học</th>
+              <th>Khối</th>
+              <th>Học phí khóa</th>
+              <th>Học phí / Buổi</th>
+              <th>Số buổi</th>
+              <th>Thời gian</th>
+              <th>Số lớp đang mở</th>
+              <th>Trạng thái</th>
+              <th class="text-center">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (course of filteredCourses(); track course.id) {
+              <tr>
+                <td><span class="fw-bold">{{ course.courseCode }}</span></td>
+                <td class="fw-semibold text-primary">{{ course.name }}</td>
+                <td>{{ course.subject }}</td>
+                <td><span class="badge bg-secondary text-dark">Khối {{ course.grade }}</span></td>
+                <td class="fw-bold text-success">{{ formatCurrency(course.tuitionFee) }}</td>
+                <td class="fw-semibold">{{ formatCurrency(course.pricePerSession) }}</td>
+                <td><span class="badge bg-light text-dark border">{{ course.totalSessions }} buổi</span></td>
+                <td>{{ course.durationWeeks }} tuần</td>
+                <td><span class="badge bg-info-subtle text-info border border-info-subtle">{{ course.classCount }} lớp</span></td>
+                <td>
+                  <span class="custom-badge" [ngClass]="course.status === 'Active' ? 'success' : 'danger'">
+                    {{ course.status }}
+                  </span>
+                </td>
+                <td>
+                  <div class="d-flex justify-content-center gap-2">
+                    <button (click)="openEditModal(course)" class="btn btn-light border btn-sm" style="padding: 4px 10px;">
+                      <i class="bi bi-pencil"></i> Sửa
+                    </button>
+                    <button (click)="deleteCourse(course.id)" class="btn btn-outline-danger-custom d-flex align-items-center gap-1">
+                      <i class="bi bi-trash"></i> Xóa
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  <!-- Add/Edit Modal -->
+  @if (modalOpen()) {
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 1050;">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px;">
+          <div class="modal-header border-0 pb-0">
+            <h5 class="modal-title fw-bold">
+              {{ editingId() ? 'Cập Nhật Khóa Học' : 'Thêm Khóa Học Mới' }}
+            </h5>
+            <button type="button" class="btn-close" (click)="closeModal()"></button>
+          </div>
+
+          <div class="modal-body py-4">
+            @if (submitError()) {
+              <div class="alert alert-danger py-2 px-3 text-center mb-3" style="font-size: 13px; border-radius: 8px;">
+                {{ submitError() }}
+              </div>
+            }
+
+            <form [formGroup]="courseForm">
+              <div class="row g-3">
+                <!-- Name -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold small">Tên khóa học *</label>
+                  <input type="text" class="form-control" formControlName="name" placeholder="Tên khóa học" />
+                  @if (hasControlError('name', 'required')) {
+                    <div class="text-danger small mt-1">Vui lòng nhập tên khóa học!</div>
+                  }
+                </div>
+
+                <!-- Subject -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-semibold small">Môn học *</label>
+                  <input type="text" class="form-control" formControlName="subject" placeholder="Môn học" />
+                  @if (hasControlError('subject', 'required')) {
+                    <div class="text-danger small mt-1">Vui lòng điền môn học!</div>
+                  }
+                </div>
+
+                <!-- Grade -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-semibold small">Khối học *</label>
+                  <input type="text" class="form-control" formControlName="grade" placeholder="e.g. 6" />
+                  @if (hasControlError('grade', 'required')) {
+                    <div class="text-danger small mt-1">Vui lòng điền khối học!</div>
+                  }
+                </div>
+
+                <!-- Total Fee -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold small">Học phí trọn khóa (VND) *</label>
+                  <input type="number" class="form-control" formControlName="tuitionFee" placeholder="Tổng học phí" />
+                  @if (hasControlError('tuitionFee', 'required')) {
+                    <div class="text-danger small mt-1">Vui lòng nhập học phí!</div>
+                  }
+                </div>
+
+                <!-- Price per session -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold small">Đơn giá / Buổi học (VND) *</label>
+                  <input type="number" class="form-control" formControlName="pricePerSession" placeholder="Giá mỗi buổi học" />
+                  @if (hasControlError('pricePerSession', 'required')) {
+                    <div class="text-danger small mt-1">Vui lòng nhập đơn giá buổi học!</div>
+                  }
+                </div>
+
+                <!-- Total Sessions -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold small">Tổng số buổi học *</label>
+                  <input type="number" class="form-control" formControlName="totalSessions" placeholder="Tổng số buổi" />
+                  @if (hasControlError('totalSessions', 'required')) {
+                    <div class="text-danger small mt-1">Vui lòng nhập số buổi học!</div>
+                  }
+                </div>
+
+                <!-- Duration Weeks -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold small">Thời lượng học (Tuần)</label>
+                  <input type="number" class="form-control" formControlName="durationWeeks" placeholder="Thời gian theo tuần" />
+                </div>
+
+                <!-- Max Students -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold small">Sĩ số tối đa</label>
+                  <input type="number" class="form-control" formControlName="maxStudents" placeholder="Sĩ số học sinh" />
+                </div>
+
+                <!-- Status -->
+                @if (editingId()) {
+                  <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold small">Trạng thái</label>
+                    <select class="form-select" formControlName="status">
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                  </div>
+                }
+
+                <!-- Description -->
+                <div class="col-12">
+                  <label class="form-label fw-semibold small">Mô tả chi tiết khóa học</label>
+                  <textarea class="form-control" formControlName="description" rows="3" placeholder="Tóm tắt nội dung khóa học"></textarea>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <div class="modal-footer border-0 pt-0">
+            <button type="button" class="btn btn-light" (click)="closeModal()">Hủy</button>
+            <button type="button" class="btn btn-primary" (click)="onSubmit()" 
+                    [disabled]="courseForm.invalid">
+              {{ editingId() ? 'Lưu thay đổi' : 'Thêm mới' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,12 @@
+{
+  "/api": {
+    "target": "http://localhost:5258",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/Uploads": {
+    "target": "http://localhost:5258",
+    "secure": false,
+    "changeOrigin": true
+  }
+}

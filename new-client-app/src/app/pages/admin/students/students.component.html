@@ -1,0 +1,282 @@
+<div>
+  <!-- Header Area -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+    <div>
+      <h1 class="page-title mb-0">Học Sinh</h1>
+      <p class="text-muted mb-0">Tạo, cập nhật và quản lý danh sách học sinh và ví học phí.</p>
+    </div>
+    <button (click)="openCreateModal()" class="btn btn-primary d-flex align-items-center gap-2">
+      <i class="bi bi-plus-lg"></i> Thêm Học Sinh Mới
+    </button>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="custom-card shadow-sm mb-4">
+    <div class="row g-3">
+      <div class="col-12 col-md-8 col-lg-9">
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control border-start-0 ps-0" 
+                 placeholder="Tìm kiếm theo tên, mã học sinh, số điện thoại, email..." 
+                 [(ngModel)]="keyword" (ngModelChange)="onFilterChange()" />
+        </div>
+      </div>
+      <div class="col-12 col-md-4 col-lg-3">
+        <select class="form-select" [(ngModel)]="status" (ngModelChange)="onFilterChange()">
+          <option value="">Tất cả trạng thái</option>
+          <option value="Active">Active</option>
+          <option value="Suspended">Suspended</option>
+          <option value="Reserved">Reserved</option>
+          <option value="Dropped">Dropped</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Section -->
+  <div class="custom-card shadow-sm p-0 overflow-hidden">
+    @if (loading()) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <div class="mt-2 text-muted">Đang tải danh sách học sinh...</div>
+      </div>
+    } @else if (students().length === 0) {
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-people" style="font-size: 40px;"></i>
+        <p class="mt-2 mb-0">Không tìm thấy học sinh nào.</p>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th>Mã học sinh</th>
+              <th>Họ và tên</th>
+              <th>Ngày sinh</th>
+              <th>Giới tính</th>
+              <th>Khối</th>
+              <th>SĐT Phụ huynh</th>
+              <th>Trạng thái</th>
+              <th class="text-center">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (student of students(); track student.id) {
+              <tr>
+                <td><span class="fw-bold">{{ student.studentCode }}</span></td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <img [src]="student.avatarUrl || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'" 
+                         class="rounded-circle border" 
+                         style="width: 32px; height: 32px; object-fit: cover;" 
+                         (error)="onAvatarError($event)" />
+                    <span class="fw-semibold">{{ student.fullName }}</span>
+                  </div>
+                </td>
+                <td>{{ formatDate(student.dateOfBirth) }}</td>
+                <td>{{ student.gender }}</td>
+                <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle">Khối {{ student.gradeLevel }}</span></td>
+                <td>{{ student.parentPhone }}</td>
+                <td>
+                  <span class="custom-badge" [ngClass]="getStatusClass(student.studentStatus)">
+                    {{ student.studentStatus }}
+                  </span>
+                </td>
+                <td>
+                  <div class="d-flex justify-content-center gap-2">
+                    <button (click)="viewDetails(student.id)" class="btn btn-outline-primary-custom d-flex align-items-center gap-1">
+                      <i class="bi bi-eye"></i> Chi tiết
+                    </button>
+                    <button (click)="openEditModal(student)" class="btn btn-light border btn-sm" style="padding: 4px 10px;">
+                      <i class="bi bi-pencil"></i> Sửa
+                    </button>
+                    <button (click)="deleteStudent(student.id)" class="btn btn-outline-danger-custom d-flex align-items-center gap-1">
+                      <i class="bi bi-trash"></i> Xóa
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  <!-- Add/Edit Modal -->
+  @if (modalOpen()) {
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 1050;">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px;">
+          <div class="modal-header border-0 pb-0">
+            <h5 class="modal-title fw-bold">
+              {{ editingId() ? 'Cập Nhật Hồ Sơ Học Sinh' : 'Thêm Học Sinh Mới' }}
+            </h5>
+            <button type="button" class="btn-close" (click)="closeModal()"></button>
+          </div>
+
+          <div class="modal-body py-4">
+            @if (submitError()) {
+              <div class="alert alert-danger py-2 px-3 text-center mb-3" style="font-size: 13px; border-radius: 8px;">
+                {{ submitError() }}
+              </div>
+            }
+
+            <form [formGroup]="studentForm">
+              <div class="row g-3">
+                <!-- Student Code -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold small">Mã học sinh</label>
+                  <input type="text" class="form-control" formControlName="studentCode" 
+                         placeholder="Tự động sinh nếu bỏ trống" [attr.disabled]="editingId() ? true : null" />
+                </div>
+
+                <!-- Full Name -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold small">Họ và tên *</label>
+                  <input type="text" class="form-control" formControlName="fullName" placeholder="Nhập họ và tên" />
+                  @if (hasControlError('fullName', 'required')) {
+                    <div class="text-danger small mt-1">Vui lòng điền họ tên!</div>
+                  }
+                </div>
+
+                <!-- DOB -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold small">Ngày sinh *</label>
+                  <input type="date" class="form-control" formControlName="dateOfBirth" />
+                  @if (hasControlError('dateOfBirth', 'required')) {
+                    <div class="text-danger small mt-1">Vui lòng chọn ngày sinh!</div>
+                  }
+                </div>
+
+                <!-- Gender -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold small">Giới tính *</label>
+                  <select class="form-select" formControlName="gender">
+                    <option value="">Chọn giới tính</option>
+                    <option value="Male">Nam</option>
+                    <option value="Female">Nữ</option>
+                    <option value="Other">Khác</option>
+                  </select>
+                  @if (hasControlError('gender', 'required')) {
+                    <div class="text-danger small mt-1">Vui lòng chọn giới tính!</div>
+                  }
+                </div>
+
+                <!-- Phone -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold small">Số điện thoại</label>
+                  <input type="text" class="form-control" formControlName="phone" placeholder="SĐT học sinh" />
+                </div>
+
+                <!-- Email -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold small">Email</label>
+                  <input type="email" class="form-control" formControlName="email" placeholder="Email học sinh" />
+                  @if (hasControlError('email', 'email')) {
+                    <div class="text-danger small mt-1">Email không đúng định dạng!</div>
+                  }
+                </div>
+
+                <!-- Address -->
+                <div class="col-12">
+                  <label class="form-label fw-semibold small">Địa chỉ</label>
+                  <input type="text" class="form-control" formControlName="address" placeholder="Địa chỉ nhà" />
+                </div>
+
+                <!-- Grade -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold small">Khối lớp (e.g. 6)</label>
+                  <input type="text" class="form-control" formControlName="gradeLevel" placeholder="Khối lớp" />
+                </div>
+
+                <!-- School -->
+                <div class="col-12 col-md-5">
+                  <label class="form-label fw-semibold small">Trường học</label>
+                  <input type="text" class="form-control" formControlName="schoolName" placeholder="Tên trường học" />
+                </div>
+
+                <!-- Status -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-semibold small">Trạng thái</label>
+                  <select class="form-select" formControlName="studentStatus">
+                    <option value="Active">Active</option>
+                    <option value="Suspended">Suspended</option>
+                    <option value="Reserved">Reserved</option>
+                    <option value="Dropped">Dropped</option>
+                  </select>
+                </div>
+
+                <!-- Parent Name -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold small">Tên phụ huynh</label>
+                  <input type="text" class="form-control" formControlName="parentName" placeholder="Họ tên phụ huynh" />
+                </div>
+
+                <!-- Parent Phone -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold small">SĐT phụ huynh</label>
+                  <input type="text" class="form-control" formControlName="parentPhone" placeholder="SĐT phụ huynh" />
+                </div>
+
+                <!-- Parent Email -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold small">Email phụ huynh</label>
+                  <input type="email" class="form-control" formControlName="parentEmail" placeholder="Email phụ huynh" />
+                </div>
+
+                <!-- Image Upload -->
+                <div class="col-12">
+                  <label class="form-label fw-semibold small">Ảnh đại diện</label>
+                  <div class="d-flex align-items-center gap-3">
+                    <img [src]="avatarPreview() || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'" 
+                         class="rounded-circle border" 
+                         style="width: 50px; height: 50px; object-fit: cover;"
+                         (error)="onAvatarError($event)" />
+                    <label class="btn btn-sm btn-secondary-light position-relative overflow-hidden cursor-pointer">
+                      @if (uploading()) {
+                        <span class="spinner-border spinner-border-sm me-1"></span> Đang tải...
+                      } @else {
+                        Tải ảnh lên
+                      }
+                      <input type="file" accept="image/*" class="position-absolute opacity-0" 
+                             style="left:0; top:0; width:100%; height:100%; cursor:pointer;" 
+                             (change)="handleAvatarUpload($event)" />
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Health Note -->
+                <div class="col-12">
+                  <label class="form-label fw-semibold small">Ghi chú sức khỏe / đặc biệt</label>
+                  <textarea class="form-control" formControlName="healthNote" rows="2" 
+                            placeholder="Các lưu ý về bệnh lý hoặc ghi chú khác"></textarea>
+                </div>
+
+                <!-- Password (only for creation) -->
+                @if (!editingId()) {
+                  <div class="col-12">
+                    <label class="form-label fw-semibold small">Mật khẩu khởi tạo *</label>
+                    <input type="password" class="form-control" formControlName="password" 
+                           placeholder="Tối thiểu 6 ký tự, gồm chữ hoa + số" />
+                    @if (hasControlError('password', 'required')) {
+                      <div class="text-danger small mt-1">Vui lòng nhập mật khẩu khởi tạo!</div>
+                    }
+                  </div>
+                }
+              </div>
+            </form>
+          </div>
+
+          <div class="modal-footer border-0 pt-0">
+            <button type="button" class="btn btn-light" (click)="closeModal()">Hủy</button>
+            <button type="button" class="btn btn-primary" (click)="onSubmit()" 
+                    [disabled]="studentForm.invalid || uploading()">
+              {{ editingId() ? 'Lưu thay đổi' : 'Thêm mới' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

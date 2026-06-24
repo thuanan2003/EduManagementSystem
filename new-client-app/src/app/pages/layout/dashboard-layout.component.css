@@ -1,0 +1,9 @@
+.transition-all {
+  transition: all 0.2s ease-in-out;
+}
+.hover-bg-light:hover {
+  background-color: var(--border-color);
+}
+.cursor-pointer {
+  cursor: pointer;
+}
